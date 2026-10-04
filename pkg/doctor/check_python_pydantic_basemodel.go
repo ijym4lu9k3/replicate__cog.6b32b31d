@@ -506,7 +506,7 @@ func editsForModelConfig(classNode *sitter.Node, source []byte) []byteEdit {
 			}
 			// Rewrite pydantic.ConfigDict → ConfigDict
 			fnEdit = &byteEdit{
-				start:       obj.EndByte(),
+				start:       fn.StartByte(),
 				end:         fn.EndByte(),
 				replacement: []byte("ConfigDict"),
 			}
@@ -528,10 +528,15 @@ func editsForModelConfig(classNode *sitter.Node, source []byte) []byteEdit {
 				schemaPython.Content(key, source) == "arbitrary_types_allowed" &&
 				schemaPython.Content(val, source) == "True" {
 				argToRemove = arg
+				continue
 			}
 			kwArgs++
 		}
 		if argToRemove == nil {
+			// Still emit the pydantic.ConfigDict rewrite if any.
+			if fnEdit != nil {
+				edits = append(edits, *fnEdit)
+			}
 			continue
 		}
 
