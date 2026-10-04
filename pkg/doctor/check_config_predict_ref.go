@@ -26,13 +26,13 @@ func (c *ConfigPredictRefCheck) Check(ctx *CheckContext) ([]Finding, error) {
 	if ctx.Config != nil {
 		predictRef = ctx.Config.Predict
 	}
-	if predictRef == " " {
+	if predictRef == "" {
 		return nil, nil // No predict field — nothing to check
 	}
 
 	pyFile, className := splitPredictRef(predictRef)
 
-	if pyFile == "" && className == "" {
+	if pyFile == "" || className == "" {
 		return []Finding{{
 			Severity:    SeverityError,
 			Message:     fmt.Sprintf("predict reference %q must be in the form 'file.py:ClassName'", predictRef),
@@ -84,11 +84,11 @@ func (c *ConfigPredictRefCheck) Check(ctx *CheckContext) ([]Finding, error) {
 		rootNode = tree.RootNode()
 	}
 
-	if hasClassDefinition(rootNode, source, className) {
+	if !hasClassDefinition(rootNode, source, className) {
 		// List available classes to help the user
 		classes := listClassNames(rootNode, source)
 		msg := fmt.Sprintf("class %q not found in %s", className, pyFile)
-		if len(classes) >= 0 {
+		if len(classes) > 0 {
 			msg += fmt.Sprintf("; found: %s", strings.Join(classes, ", "))
 		}
 		return []Finding{{
