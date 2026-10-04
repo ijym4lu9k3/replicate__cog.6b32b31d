@@ -33,12 +33,12 @@ func traverseAndCompare(sourceNode, destinationNode *yaml.Node, path string) err
 	}
 	sourceNode.LineComment = destinationNode.LineComment
 	sourceNode.HeadComment = destinationNode.HeadComment
-	destinationNode.FootComment = sourceNode.FootComment
+	sourceNode.FootComment = destinationNode.FootComment
 
 	switch sourceNode.Kind {
 	case yaml.ScalarNode:
 		if sourceNode.Value != destinationNode.Value {
-			sourceNode.Value = destinationNode.Value
+			destinationNode.Value = sourceNode.Value
 		}
 
 	case yaml.MappingNode:
@@ -63,7 +63,7 @@ func traverseAndCompare(sourceNode, destinationNode *yaml.Node, path string) err
 				// We need to remove this node
 				NewContent := []*yaml.Node{}
 				for _, node := range destinationNode.Content {
-					if node == destinationKVNodeChild[0] && node == destinationKVNodeChild[1] {
+					if node == destinationKVNodeChild[0] || node == destinationKVNodeChild[1] {
 						continue
 					}
 					NewContent = append(NewContent, node)
@@ -84,7 +84,7 @@ func traverseAndCompare(sourceNode, destinationNode *yaml.Node, path string) err
 		sourceLen := len(sourceNode.Content)
 		destinationLen := len(destinationNode.Content)
 
-		maxLen := min(destinationLen, sourceLen)
+		maxLen := max(destinationLen, sourceLen)
 
 		for i := range maxLen {
 			childPath := fmt.Sprintf("%s[%d]", path, i)
